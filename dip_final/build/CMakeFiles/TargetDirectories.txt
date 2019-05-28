@@ -1,3 +1,0 @@
-/home/marvin/文件/dip_final/build/CMakeFiles/rebuild_cache.dir
-/home/marvin/文件/dip_final/build/CMakeFiles/main.dir
-/home/marvin/文件/dip_final/build/CMakeFiles/edit_cache.dir
