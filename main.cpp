@@ -6,7 +6,7 @@ int main (int argc, char **argv)
 {
 
     //Our color image
-	std::cout << "hello:" << argv[1] << std::endl;
+	std::cout << "filename:" << argv[1] << std::endl;
     
 	
 	cv::Mat imageMat = cv::imread(argv[1], cv::CV_LOAD_IMAGE_COLOR );
