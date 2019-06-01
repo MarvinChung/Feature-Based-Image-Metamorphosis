@@ -1,70 +1,62 @@
 #include <opencv2/opencv.hpp>
+
 #include <iostream>
-#include "LineSegment.h"
+
+#include "warping.h"
+#include "utils.h"
 
 int main (int argc, char **argv)
 {
 
     //Our color image
 	std::cout << "filename:" << argv[1] << std::endl;
+	std::cout << "filename:" << argv[2] << std::endl;
     
 	
-	cv::Mat imageMat = cv::imread(argv[1]);
-    if (imageMat.empty())
+	cv::Mat srcMat = cv::imread(argv[1]);
+    cv::Mat desMat = cv::imread(argv[2]);
+	
+	if (srcMat.empty() || desMat.empty())
     {
             std::cerr << "ERROR: Could not read image " << argv[1] << std::endl;
             return 1;
     }
     
-	cv::resize(imageMat, imageMat, cv::Size(868, 512), 0, 0, CV_INTER_LANCZOS4);	
+	std::cout << "resize images" << std::endl;
+	cv::resize(srcMat, srcMat, cv::Size(512, 512), 0, 0, CV_INTER_LANCZOS4);	
+	cv::resize(desMat, desMat, cv::Size(512, 512), 0, 0, CV_INTER_LANCZOS4);	
 
-    //Binary image
-    //cv::Mat binaryMat(imageMat.size(), CV_8U);
-    
-    //RGBimage2binary(imageMat, binaryMat, 100);
-	std::vector<cv::Vec4i> lines;
-	DrawLineSeg(imageMat, 50, 200, lines);
-        //Show the results
-    //cv::namedWindow("Output", cv::WINDOW_AUTOSIZE);
-    //cv::imshow("Output", binaryMat);
+	std::vector<cv::Vec4i> linesA;
+	getLines(srcMat, 100, 200, linesA, "src");
+	
+	std::vector<cv::Vec4i> linesB;
+	getLines(desMat, 50, 100, linesB, "des");
 
-    //cv::waitKey(0);
+	std::vector<LinePair> pairs;
+	generateLinePairs(linesA, linesB, pairs);
+	drawLinePairs(srcMat, desMat, pairs);
+
+	//void warp(cv::Mat& src, cv::Mat& des, std::vector<LinePair>& pairs, float t, float a, float b)
+	warp(srcMat, desMat, pairs, 0.5, 1, 2);
+ 	
+	cv::namedWindow("Output", cv::WINDOW_AUTOSIZE);
+    cv::imshow("Output", desMat);
+
+    cv::waitKey(0);
+
+	/*   
+	//Show the results
+    for(int i = 19; i < 832 ; i++)
+	{
+		srcMat.at<cv::Vec3b>(y,x)[0] = 0;
+		srcMat.at<cv::Vec3b>(y,x)[1] = 0;
+		srcMat.at<cv::Vec3b>(y,x)[2] = 0;
+	}
+	cv::namedWindow("Output", cv::WINDOW_AUTOSIZE);
+    cv::imshow("Output", srcMat);
+
+    cv::waitKey(0);
+	*/
+
 }
 
-// int main (int argc, char **argv)
-// {
-
-//     if (argc != 2)
-//     {
-//             std::cout << "USE: " << argv[0] << " <file_path>" << std::endl;
-//             return 1;
-//     }
-
-//     //Our color image
-//     cv::Mat imageMat = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
-//     if (imageMat.empty())
-//     {
-//             std::cerr << "ERROR: Could not read image " << argv[1] << std::endl;
-//             return 1;
-//     }
-
-//     //Grayscale matrix
-//     cv::Mat grayscaleMat (imageMat.size(), CV_8U);
-
-//     //Convert BGR to Gray
-//     cv::cvtColor( imageMat, grayscaleMat, CV_BGR2GRAY );
-
-//     //Binary image
-//     cv::Mat binaryMat(grayscaleMat.size(), grayscaleMat.type());
-
-//     //Apply thresholding
-//     cv::threshold(grayscaleMat, binaryMat, 100, 255, cv::THRESH_BINARY);
-
-//     //Show the results
-//     cv::namedWindow("Output", cv::WINDOW_AUTOSIZE);
-//     cv::imshow("Output", binaryMat);
-
-//     cv::waitKey(0);
-
-//     return 0;
-// }
