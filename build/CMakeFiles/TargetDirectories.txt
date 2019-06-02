@@ -1,0 +1,3 @@
+/home/marvin/Github/Feature-Based-Image-Metamorphosis/build/CMakeFiles/rebuild_cache.dir
+/home/marvin/Github/Feature-Based-Image-Metamorphosis/build/CMakeFiles/main.dir
+/home/marvin/Github/Feature-Based-Image-Metamorphosis/build/CMakeFiles/edit_cache.dir

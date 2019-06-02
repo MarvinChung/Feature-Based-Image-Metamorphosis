@@ -4,6 +4,7 @@
 
 #include "warping.h"
 #include "utils.h"
+#include "ImageNodeHandler.h"
 
 int main (int argc, char **argv)
 {
@@ -18,45 +19,39 @@ int main (int argc, char **argv)
 	
 	if (srcMat.empty() || desMat.empty())
     {
-            std::cerr << "ERROR: Could not read image " << argv[1] << std::endl;
-            return 1;
+        std::cerr << "ERROR: Could not read image " << argv[1] << std::endl;
+        return 1;
     }
     
 	std::cout << "resize images" << std::endl;
 	cv::resize(srcMat, srcMat, cv::Size(512, 512), 0, 0, CV_INTER_LANCZOS4);	
 	cv::resize(desMat, desMat, cv::Size(512, 512), 0, 0, CV_INTER_LANCZOS4);	
 
-	std::vector<cv::Vec4i> linesA;
-	getLines(srcMat, 100, 200, linesA, "src");
+	//void warp(cv::Mat& src, cv::Mat& des, std::vector<LinePair>& pairs, float p, float a, float b)
 	
-	std::vector<cv::Vec4i> linesB;
-	getLines(desMat, 50, 100, linesB, "des");
+	//parameters for warping
+	float p = 0; // suggest 0 ~ 1
+	float a = 0.2; //Values larger than that will yield a more smooth warping,but with less precise control.
+	float b = 1; // suggest 0.5 ~ 2
+	float deltaT = 0.2;
+	int maxDepth = 3;
 
-	std::vector<LinePair> pairs;
-	generateLinePairs(linesA, linesB, pairs);
-	drawLinePairs(srcMat, desMat, pairs);
+	//image_ct set to 1, since the 0.png is srcMat
+	ImageNodeHandler root(0, 0, p, a, b, deltaT, maxDepth);
+	//ImageNodeHandler root;
+	std::cout << "m_deltaT: " << root.m_deltaT << std::endl;
 
-	//void warp(cv::Mat& src, cv::Mat& des, std::vector<LinePair>& pairs, float t, float a, float b)
-	warp(srcMat, desMat, pairs, 0.5, 1, 2);
- 	
-	cv::namedWindow("Output", cv::WINDOW_AUTOSIZE);
-    cv::imshow("Output", desMat);
-
-    cv::waitKey(0);
-
-	/*   
-	//Show the results
-    for(int i = 19; i < 832 ; i++)
+	if(root.m_deltaT <= 0)
 	{
-		srcMat.at<cv::Vec3b>(y,x)[0] = 0;
-		srcMat.at<cv::Vec3b>(y,x)[1] = 0;
-		srcMat.at<cv::Vec3b>(y,x)[2] = 0;
+		std::cerr << "ERROR: m_deltaT <=0 will cause program never terminate" << std::endl;
+		return 1;
 	}
-	cv::namedWindow("Output", cv::WINDOW_AUTOSIZE);
-    cv::imshow("Output", srcMat);
 
-    cv::waitKey(0);
-	*/
+	root.drawImage(srcMat);
+
+	root.buildRecursive(0, srcMat, desMat);
+
+	root.drawImage(desMat);
 
 }
 

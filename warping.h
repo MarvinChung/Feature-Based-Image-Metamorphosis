@@ -1,3 +1,4 @@
+#pragma once
 #include <opencv2/opencv.hpp>
 #include "LineSegment.h"
 #include "LinePair.h"
@@ -36,8 +37,14 @@ cv::Vec3b color_interpolation(float x, float y, cv::Vec3b color1, cv::Vec3b colo
 }
 
 
-void warp(cv::Mat& src, cv::Mat& des, std::vector<LinePair>& pairs, float t, float a, float b)
+void warp(cv::Mat& src, cv::Mat& des, std::vector<LinePair>& pairs, float p, float a, float b)
 {
+	
+	int x_min = 0;
+	int x_max = src.cols;
+	int y_min = 0;
+	int y_max = src.rows; 
+
 	for(int r = 0; r < src.rows; r++)
 	{
 		for(int c = 0; c < src.cols; c++)
@@ -66,7 +73,7 @@ void warp(cv::Mat& src, cv::Mat& des, std::vector<LinePair>& pairs, float t, flo
 				else
 					dist = std::abs(v);
 				
-				weight = std::pow(pairs[i].getDesLine().length() / (a + dist), b);
+				weight = std::pow( std::pow(pairs[i].getDesLine().length(), p) / (a + dist), b);
 				weightsum = weightsum + weight;
 
 				DSUM += weight * displacement;
@@ -74,36 +81,30 @@ void warp(cv::Mat& src, cv::Mat& des, std::vector<LinePair>& pairs, float t, flo
 			}
 			cv::Point2f output = cv::Point2f(c, r) + DSUM / weightsum;
 			
+
+
 			int x_low = int(std::floor(output.x));
 			int x_high = int(std::ceil(output.x));
 			int y_low = int(std::floor(output.y));
 			int y_high = int(std::ceil(output.y));
-			/*
-			for (int k = 0; k < 3; k++) {
-				float value = color_interpolation(output.x, output.y, image1[k][x_low][y_low], image_data[k][x_low][y_high], image_data[k][x_high][y_low], image_data[k][x_high][y_high]);
-				output_image[k][x][y] = unsigned char(round((1 - t) * value + t * image2[k][x][y])); //cross dissolve the color between the new pixel of the source image(output_x, output_y) and the original pixel of the destination page(x, y)
-			}
-			*/
 
-			// std::cout << x_low << "?" << y_low << std::endl;
-			// std::cout << des.rows << "x" << des.cols << std::endl;
+			x_low = (x_low > x_min && x_low < x_max - 1)? x_low : 0;
+			x_high = (x_high > x_min && x_high < x_max - 1)? x_high : 0;
+
+			y_low = (y_low > y_min && y_low < y_max - 1)? y_low : 0;
+			y_high = (y_high > y_min && y_high < y_max - 1)? y_high : 0;
+
 
 			cv::Vec3b color1, color2, color3, color4;
-			if(bound(x_low, y_low, src))
-				color1 =  src.at<cv::Vec3b>(cv::Point(x_low ,y_low));
-			if(bound(x_low, y_high, src))
-				color2 = src.at<cv::Vec3b>(cv::Point(x_low, y_high));
-			if(bound(x_high, y_low, src))
-				color3 = src.at<cv::Vec3b>(cv::Point(x_high, y_low));
-			if(bound(x_high, y_high, src))
-				color4 = src.at<cv::Vec3b>(cv::Point(x_high, y_high));
 
-			//puts("interpolation");
+			color1 =  src.at<cv::Vec3b>(cv::Point(x_low ,y_low));
+			color2 = src.at<cv::Vec3b>(cv::Point(x_low, y_high));
+			color3 = src.at<cv::Vec3b>(cv::Point(x_high, y_low));
+			color4 = src.at<cv::Vec3b>(cv::Point(x_high, y_high));
+
 			cv::Vec3b value = color_interpolation(output.x, output.y, color1, color2, color3, color4);
 
-			//std::cout << value << std::endl;
-
-			des.at<cv::Vec3b>(cv::Point(c,r)) = std::round(1-t) * value + t * src.at<cv::Vec3b>(cv::Point(c,r));
+			des.at<cv::Vec3b>(cv::Point(c,r)) = value;
 
 		}
 

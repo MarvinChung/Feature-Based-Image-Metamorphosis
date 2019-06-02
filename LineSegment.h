@@ -24,6 +24,7 @@ public:
 	bool operator==(const LineSegment& other) const;
 	float theta() const;
 	float tan() const;
+	float dist2Point(cv::Point2f p) const;
 };
 
 LineSegment::LineSegment(): m_start(0,0), m_end(0,0)
@@ -74,12 +75,17 @@ float LineSegment::tan() const
 
 float LineSegment::theta() const
 {
-	return atan(this->tan());
+	return atan(this->tan()) * 180 / CV_PI;
 }
 
 float LineSegment::length() const
 {
 	return std::sqrt((m_end.y - m_start.y) * (m_end.y - m_start.y) +  (m_end.x - m_start.x) * (m_end.x - m_start.x));
+}
+
+float LineSegment::dist2Point(cv::Point2f p) const
+{
+	return (tan() * (p.x - m_start.x) - p.y + m_start.y)/ std::sqrt( tan() * tan() + 1);
 }
 
 float LineSegment::midPointdistance(const LineSegment& other) const
@@ -97,7 +103,7 @@ inline void getLines(const cv::Mat& imageMat, const double TL, const double TH, 
 	//cv::GaussianBlur(imageMat, grayscaleMat, cv::Size(3,3), 0, 0);
 	//cv::Canny(imageMat, temp, TL, TH, 3);
 	//cv::HoughLinesP(temp, lines, 1, 2 * CV_PI/180, 100,1000, 50 );
-	std::cout << "Canny" << std::endl;
+	
 	
 	cv::Mat response;
 	const double CannyThres[] = {TL, TH};
@@ -107,25 +113,44 @@ inline void getLines(const cv::Mat& imageMat, const double TL, const double TH, 
 	cv::cvtColor(imageMat, gray, cv::COLOR_BGR2GRAY);
 	cv::Canny( gray, response, CannyThres[0], CannyThres[1], CannyAperture, CannyL2Grad );
 	
-//#ifdef DEBUG	
+#ifdef DEBUG	
 	cv::namedWindow(str, cv::WINDOW_AUTOSIZE);
     cv::imshow(str, response);
     cv::waitKey(0);
-//#endif
+#endif
 
-	const double HoughDistRes = 2;
+	const double HoughDistRes = 1;
 	const double HoughAngRes = CV_PI/180;
-	const double HoughMinLen = 20;//30
+	const double HoughMinLen = 50;//30
 	const double HoughMaxGap = 5;//10
-	const int HoughThres = 10;//80
+	const int HoughThres = 5;//80
 
 	lines.clear();
 	
-	std::cout << "HoughLinesP" << std::endl;
 	
+	
+	
+	cv::Mat temp_srcMat = imageMat.clone();
 	cv::HoughLinesP( response, lines, HoughDistRes, HoughAngRes, HoughThres, HoughMinLen, HoughMaxGap );
  
+	for( size_t i = 0; i < lines.size(); i++ )
+  	{
 
+        //std::cout << l[0] << "," << l[1] << "," << l[2] << "," << l[3] << std::endl;
+        cv::line( temp_srcMat, cv::Point(lines[i][0],lines[i][1]), cv::Point(lines[i][2],lines[i][3]), cv::Scalar(i,i,255), 2, 8);
+  	}
+    
+  	if(lines.size() == 0)
+  	{
+  		std::cerr << "no line detected" << std::endl;
+  		exit(1);
+  	}
+
+#ifdef DEBUG 
+	cv::namedWindow("Output", cv::WINDOW_AUTOSIZE);
+    cv::imshow(str, temp_srcMat);
+    cv::waitKey(0);
+#endif
 }
 
 //void DrawLineSeg(const cv::Mat& imageMat, const double TL, const double TH, std::vector<cv::Vec4i>& lines);
